@@ -1,0 +1,7 @@
+---
+- name: Setup everything needed for your gateway!
+  hosts: homegw
+  become: true
+
+  roles:
+    - iptables
