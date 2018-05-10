@@ -1,0 +1,3 @@
+lanIF: "{{ ansible_default_ipv4.interface }}"
+wlanIF: "{{ ansible_interfaces | select('match','(wl.*)') | list | first }}"
+wanIF: "{{ ansible_interfaces | difference([lanIF]) |select('match','(en.*|eth.*)')|list| first }}"
