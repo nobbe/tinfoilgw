@@ -3,3 +3,4 @@ wlanIF: "{{ ansible_interfaces | select('match','(wl.*)') | list | first }}"
 wanIF: "{{ ansible_interfaces | difference([lanIF]) |select('match','(en.*|eth.*)')|list| first }}"
 
 lanNet: 192.168.100.0/24
+sshPort: 22

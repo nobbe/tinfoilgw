@@ -11,7 +11,8 @@
       - net.ipv4.ip_forward
 
   # Allow related and established connections
-  - iptables:
+  - name: Allow established
+    iptables:
       chain: INPUT
       ctstate: ESTABLISHED,RELATED
       jump: ACCEPT
@@ -19,14 +20,30 @@
 
   # To prevent any problems, allow SSH to router from LAN.
   - name: "Enable SSH from LAN"
-    iptables_raw:
-      name: homegw_ssh
-      rules: "-A INPUT -p tcp -m tcp -s {{lanNet}} -d {{ ansible_default_ipv4 }} --dport {{ ansible_ssh_port }} -j ACCEPT"
+    become: yes
+    iptables:
+      chain: INPUT
+      source: "{{lanNet}}"
+      destination: "{{ ansible_default_ipv4.address }}"
+      destination_port: "{{ sshPort }}"
+      protocol: tcp
+      jump: ACCEPT
 
-  - name: "Enable routing in iptables"
-    iptables_raw:
-      name: homegw_forward
-      rules: |
-        -A FORWARD -i {{ wanIF }} -j ACCEPT
-        -A FORWARD -o {{ wanIF }} -j ACCEPT
-        -t nat -A POSTROUTING -o {{ wanIF }} -j MASQUERADE
+  - name: "Allow inbound forward"
+    iptables:
+      chain: FORWARD
+      in_interface: "{{ wanIF }}"
+      jump: ACCEPT
+
+  - name: "Allow outbound forward"
+    iptables:
+      chain: FORWARD
+      out_interface: "{{ wanIF }}"
+      jump: ACCEPT
+
+  - name: "Enable masquerading"
+    iptables:
+      table: nat
+      chain: POSTROUTING
+      out_interface: "{{ wanIF }}"
+      jump: MASQUERADE
