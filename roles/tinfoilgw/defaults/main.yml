@@ -1,3 +1,10 @@
+# PROTIP: Do not edit those, manage these values from your host/group-vars!
 lanIF: "{{ ansible_default_ipv4.interface }}"
 wlanIF: "{{ ansible_interfaces | select('match','(wl.*)') | list | first }}"
 wanIF: "{{ ansible_interfaces | difference([lanIF]) |select('match','(en.*|eth.*)')|list| first }}"
+
+lanNet: 192.168.100.0/24
+wlanNet: 192.168.200.0/24
+sshPort: 22
+
+enable_ap: true

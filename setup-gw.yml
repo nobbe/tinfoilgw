@@ -1,7 +1,7 @@
 ---
-- name: Setup everything needed for your gateway!
+- name: Probably the best gw in the world
   hosts: homegw
   become: true
 
   roles:
-    - iptables
+    - tinfoilgw

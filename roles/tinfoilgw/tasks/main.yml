@@ -1,10 +1,64 @@
 ---
+  # Enable ipforwarding in sysctl
   - name: "Enable ipforwarding"
     sysctl:
-      name: net.ipv4.ip_forward
+      name: "{{ item }}"
       value: 1
       sysctl_set: yes
       state: present
       reload: yes
+    with_items:
+      - net.ipv4.ip_forward
 
-  - debug: msg="{{ all_interfaces }}"
+  # Allow related and established connections
+  - name: Allow established
+    become: yes
+    iptables:
+      chain: "{{ item }}"
+      ctstate: ESTABLISHED,RELATED
+      jump: ACCEPT
+    with_items:
+      - INPUT
+      - FORWARD
+
+  # To prevent any problems, allow SSH to router from LAN.
+  - name: "Enable SSH from LAN"
+    become: yes
+    iptables:
+      chain: INPUT
+      source: "{{lanNet}}"
+      destination: "{{ ansible_default_ipv4.address }}"
+      destination_port: "{{ sshPort }}"
+      protocol: tcp
+      jump: ACCEPT
+
+  - name: "Allow inbound forward"
+    iptables:
+      chain: FORWARD
+      in_interface: "{{ wanIF }}"
+      jump: ACCEPT
+
+  - name: "Allow outbound forward"
+    iptables:
+      chain: FORWARD
+      out_interface: "{{ wanIF }}"
+      jump: ACCEPT
+
+  - name: "Drop spoofed lan-traffic"
+    iptables:
+      chain: FORWARD
+      source: "{{lanNet}}"
+      in_interface: "{{wanIF}}"
+      jump: DROP
+
+  - name: "Enable masquerading"
+    iptables:
+      table: nat
+      chain: POSTROUTING
+      out_interface: "{{ wanIF }}"
+      jump: MASQUERADE
+
+  - name: "Setup hostapd if possible"
+    include_role: 
+        name: hostapd
+    when: wlanIF

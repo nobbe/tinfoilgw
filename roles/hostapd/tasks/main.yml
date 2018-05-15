@@ -1,0 +1,43 @@
+---
+  - debug: var=wlanSSID
+
+  - name: "Install hostapd (SUSE)"
+    become: true
+    zypper:
+      name: hostapd
+      state: present
+    when: ansible_os_family|lower == 'suse'
+
+  - name: "Install hostapd (RedHat)"
+    become: true
+    yum:
+      name: hostapd
+      state: present
+    when: ansible_os_family|lower == 'redhat'
+
+  - name: "Install hostapd (Debian)"
+    become: true
+    apt:
+      name: hostapd
+      state: present
+    when: ansible_os_family|lower == 'debian'
+
+  - name: "Setup hostapd"
+    become: true
+    lineinfile:
+      dest: /etc/hostapd.conf
+      regexp: "{{item.regexp}}"
+      line: "{{item.line}}"
+    with_items:
+      - { regexp: '^interface=', line: "interface={{wlanIF}}" }
+      - { regexp: '^ssid=', line: "ssid={{wlanSSID}}" }
+      - { regexp: '^channel=', line: "channel={{wlanChannel|default('1')}}"}
+      - { regexp: '^wpa=', line: "wpa=1"} #Don't be fooled. wpa=1 equals WPA2
+      - { regexp: '^wpa_passphrase=', line: "wpa_passphrase={{wlanPassphrase}}"}
+
+#  - name: "Get IEEE Capacity"
+#    become: true
+#    shell: "iwconfig {{ wlanIF }}|grep -Eo '(IEEE\\s?[0-9]+\\.[0-9]+[a-z]+?)'"
+#    register: ieee_capa
+#
+#  - debug: var=ieee_capa
