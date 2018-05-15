@@ -1,10 +1,32 @@
 ---
+  # Enable ipforwarding in sysctl
   - name: "Enable ipforwarding"
     sysctl:
-      name: net.ipv4.ip_forward
+      name: "{{ item }}"
       value: 1
       sysctl_set: yes
       state: present
       reload: yes
+    with_items:
+      - net.ipv4.ip_forward
 
-  - debug: msg="{{ all_interfaces }}"
+  # Allow related and established connections
+  - iptables:
+      chain: INPUT
+      ctstate: ESTABLISHED,RELATED
+      jump: ACCEPT
+    become: yes
+
+  # To prevent any problems, allow SSH to router from LAN.
+  - name: "Enable SSH from LAN"
+    iptables_raw:
+      name: homegw_ssh
+      rules: "-A INPUT -p tcp -m tcp -s {{lanNet}} -d {{ ansible_default_ipv4 }} --dport {{ ansible_ssh_port }} -j ACCEPT"
+
+  - name: "Enable routing in iptables"
+    iptables_raw:
+      name: homegw_forward
+      rules: |
+        -A FORWARD -i {{ wanIF }} -j ACCEPT
+        -A FORWARD -o {{ wanIF }} -j ACCEPT
+        -t nat -A POSTROUTING -o {{ wanIF }} -j MASQUERADE
