@@ -41,6 +41,13 @@
       out_interface: "{{ wanIF }}"
       jump: ACCEPT
 
+  - name: "Drop spoofed lan-traffic"
+    iptables:
+      chain: FORWARD
+      source: "{{lanNet}}"
+      in_interface: "{{wanIF}}"
+      jump: DROP
+      
   - name: "Enable masquerading"
     iptables:
       table: nat
