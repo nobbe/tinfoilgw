@@ -1,0 +1,4 @@
+# PROTIP: Do not edit those, manage these values from your host/group-vars!
+wlanIF: "{{ ansible_interfaces | select('match','(wl.*)') | list | first }}"
+wlanSSID: "tinfoilgw#{{ 99999999 | random }}"
+wlanPassphrase: "{{ ','.join(['dont','be','stupid','change', 'this','please'] |shuffle) | to_uuid }}"

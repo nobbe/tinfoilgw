@@ -12,11 +12,14 @@
 
   # Allow related and established connections
   - name: Allow established
+    become: yes
     iptables:
-      chain: INPUT
+      chain: "{{ item }}"
       ctstate: ESTABLISHED,RELATED
       jump: ACCEPT
-    become: yes
+    with_items:
+      - INPUT
+      - FORWARD
 
   # To prevent any problems, allow SSH to router from LAN.
   - name: "Enable SSH from LAN"
@@ -47,10 +50,15 @@
       source: "{{lanNet}}"
       in_interface: "{{wanIF}}"
       jump: DROP
-      
+
   - name: "Enable masquerading"
     iptables:
       table: nat
       chain: POSTROUTING
       out_interface: "{{ wanIF }}"
       jump: MASQUERADE
+
+  - name: "Setup hostapd if possible"
+    include_role: 
+        name: hostapd
+    when: wlanIF
